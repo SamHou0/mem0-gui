@@ -1,9 +1,10 @@
 from openai import OpenAI
 from mem0 import Memory
 import tkinter as tk
-from tkinter import scrolledtext, ttk, messagebox, END
+from tkinter import ttk, messagebox, END
 import markdown
 import os
+from tkhtmlview import HTMLLabel  # 导入HTMLLabel
 
 openai_client = OpenAI()
 
@@ -13,7 +14,7 @@ config = {
     "llm": {
         "provider": "openai",
         "config": {
-            "model": "gpt-4o",
+            "model": "deepseek-chat",
             "temperature": 0.2,
             "max_tokens": 1500,
             "openai_base_url": os.getenv("OPENAI_BASE_URL")
@@ -49,15 +50,26 @@ class ChatGUI:
         self.messages = [
             {"role": "system", "content": "You are a helpful AI. Answer based on query and memories."}
         ]
-
+        
         # 创建聊天记录显示区域
-        self.chat_history = scrolledtext.ScrolledText(
+        chat_frame = ttk.Frame(master)
+        chat_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+        self.chat_history = HTMLLabel(
             master, 
-            wrap=tk.WORD,
-            state='disabled',
+            html="",
             font=('Arial', 12)
         )
         self.chat_history.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+        # 创建滚动条
+        scrollbar = ttk.Scrollbar(chat_frame, orient=tk.VERTICAL, command=self.chat_history.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 将滚动条与HTMLLabel关联
+        self.chat_history.configure(yscrollcommand=scrollbar.set)
+
+        # 维护一个内部markdown字符串
+        self.current_md = ""
 
         # 创建输入区域
         input_frame = ttk.Frame(master)
@@ -100,10 +112,11 @@ class ChatGUI:
             self.master.update()
 
     def update_chat_display(self, message, sender):
-        self.chat_history.configure(state='normal')
-        self.chat_history.insert(END, message)
-        self.chat_history.configure(state='disabled')
-        self.chat_history.see(END)
+        # 将Markdown转换为HTML
+        self.current_md+=message
+        html_message = markdown.markdown(self.current_md)
+        self.chat_history.set_html(html_message)
+        self.chat_history.yview(END)
 
 def chat_with_memories(message: str, user_id: str = "default_user", gui: ChatGUI = None, messages=None) -> list:
     if messages is None:
@@ -120,7 +133,7 @@ def chat_with_memories(message: str, user_id: str = "default_user", gui: ChatGUI
     messages.append({"role": "user", "content": message})
     assistant_response = ""
     stream = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="DeepSeek-R1",
         messages=messages,
         stream=True  # 启用流式传输
     )

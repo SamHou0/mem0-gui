@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pydantic
+openai==1.61.0
+mem0ai
