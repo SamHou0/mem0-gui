@@ -1,19 +1,21 @@
-# Dockerfile
-FROM python:3.9-slim-buster
+FROM python:3.9-slim
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制依赖文件
-COPY requirements.txt ./
-# 安装依赖
+COPY . /app
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制应用程序代码
-COPY api.py ./ 
-
-# 暴露端口
 EXPOSE 8000
 
-# 启动命令
+
+ENV OPENAI_BASE_URL=https://api.openai.com/v1
+ENV MEM0_BASE_MODEl=gpt-4o-mini
+ENV MEM0_EMBEDDER_MODEl=text-embedding-3-large
+
+ENV OPENAI_API_KEY=sk-1234567abcd
+ENV QDRANT_BASE_URL=http://127.0.0.1
+ENV QDRANT_API_KEY=1234567abcd
+
+# 启动应用
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
